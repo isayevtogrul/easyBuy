@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EasyBuy - Smart Shopping Experience</title>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-shopping-bag me-2"></i>
+                EasyBuy
+            </a>
+            <div class="d-flex align-items-center">
+                <input type="text" id="searchInput" class="form-control me-2" placeholder="Search products...">
+                <button class="btn btn-outline-primary me-2" onclick="searchProducts()">Search</button>
+                <a href="#" class="btn btn-primary position-relative" onclick="showCart()">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span id="cartCount" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                        0
+                    </span>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mt-4">
+        <!-- Filters -->
+        <div class="filters-container mb-4">
+            <div class="row align-items-center">
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white">
+                            <i class="fas fa-filter"></i>
+                        </span>
+                        <select class="form-select" id="categoryFilter">
+                            <option value="">All Categories</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="price-filter">
+                        <div class="price-inputs d-flex align-items-center">
+                            <input type="number" id="minPrice" class="form-control" placeholder="Min">
+                            <span class="mx-2">-</span>
+                            <input type="number" id="maxPrice" class="form-control" placeholder="Max">
+                            <button class="btn btn-primary ms-2" onclick="applyPriceFilter()">Apply</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="active-filters" id="activeFilters">
+                        <!-- Active filters will be shown here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Products Grid -->
+        <div class="row" id="productsContainer">
+            <!-- Products will be loaded here -->
+        </div>
+    </div>
+
+    <!-- Cart Modal -->
+    <div class="modal fade" id="cartModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Shopping Cart</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="cartItems">
+                    <!-- Cart items will be loaded here -->
+                </div>
+                <div class="modal-footer">
+                    <div class="text-end w-100">
+                        <h5>Total: $<span id="cartTotal">0</span></h5>
+                        <button id="proceedToPayment" class="btn btn-success payment-button" onclick="showPaymentForm()">
+                            <i class="fas fa-credit-card me-2"></i>
+                            Proceed to Payment
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Modal -->
+    <div class="modal fade" id="paymentModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Payment Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Card Number</label>
+                        <div class="card-input-container">
+                            <input type="text" class="form-control" id="cardNumber" placeholder="1234 5678 9012 3456" maxlength="19">
+                            <i id="cardTypeIcon" class="card-type-icon"></i>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Expiry Date</label>
+                            <input type="text" class="form-control" id="expiryDate" placeholder="MM/YY" maxlength="5">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">CVV</label>
+                            <input type="text" class="form-control" id="cvv" placeholder="123" maxlength="3">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>
+                        Cancel
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="processPayment()">
+                        <i class="fas fa-check me-2"></i>
+                        Confirm Payment
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Error Modal -->
+    <div class="modal fade" id="errorModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body text-center p-4">
+                    <div class="error-icon">
+                        <i class="fas fa-exclamation-triangle text-danger fa-3x mb-3"></i>
+                    </div>
+                    <h4 class="text-danger mb-3">Error</h4>
+                    <p id="errorMessage" class="mb-4"></p>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div class="modal fade" id="successModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body text-center p-4">
+                    <div class="success-icon">
+                        <i class="fas fa-check-circle text-success fa-3x mb-3"></i>
+                    </div>
+                    <h4 class="text-success mb-3">Success</h4>
+                    <p class="mb-4">Payment completed successfully!</p>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
