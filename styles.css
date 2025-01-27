@@ -1,23 +1,100 @@
+/* Base styles */
 body {
     background: #f8f9fa;
+    font-family: 'Roboto', sans-serif;
 }
 
+/* Navbar styles */
 .navbar {
     background: white !important;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
 }
 
+/* Form elements focus and border colors */
+.form-control:focus,
+.form-select:focus {
+    border-color: #dee2e6 !important;
+    box-shadow: none !important;
+}
+
+.form-control,
+.form-select {
+    border-color: #dee2e6 !important;
+}
+
+/* Select option hover and selected states */
+.form-select option:checked,
+.form-select option:hover {
+    background-color: #ff4444 !important;
+    color: white !important;
+}
+
+/* Selected option in dropdown */
+.form-select option:checked {
+    background: #ff4444 !important;
+}
+
+/* Search button */
+.btn-outline-primary {
+    background-color: #ff4444 !important;
+    color: white !important;
+    border-color: #ff4444 !important;
+}
+
+.btn-outline-primary:hover {
+    background-color: #cc0000 !important;
+    border-color: #cc0000 !important;
+}
+
+/* Cart button and other primary buttons */
+.btn-primary {
+    background-color: #ff4444 !important;
+    color: white !important;
+    border-color: #ff4444 !important;
+}
+
+.btn-primary:hover {
+    background-color: #cc0000 !important;
+    border-color: #cc0000 !important;
+}
+
+
+.badge.bg-danger {
+    background-color: #ff4444 !important;
+    color: black !important;
+}
+
+
+.fa-shopping-cart {
+    color: black !important;
+}
+
+
+
 .filters-container {
     background: white;
     padding: 20px;
     border-radius: 10px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
 }
 
+/* Price inputs */
 .price-inputs input {
     width: 100px;
 }
 
+/* Remove arrows from number inputs */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type="number"] {
+    -moz-appearance: textfield;
+}
+
+/* Card styles */
 .card {
     transition: transform 0.3s;
     height: 100%;
@@ -40,10 +117,12 @@ body {
     color: #ffc107;
 }
 
+/* Search input */
 #searchInput {
     width: 300px;
 }
 
+/* Active filter pills */
 .active-filter {
     display: inline-block;
     background: #e9ecef;
@@ -63,6 +142,7 @@ body {
     opacity: 1;
 }
 
+/* Toast notification */
 .toast {
     position: fixed;
     bottom: 20px;
@@ -82,20 +162,10 @@ body {
     100% { opacity: 0; }
 }
 
+/* Modal styles */
 .modal-content {
     border: none;
     box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-}
-
-/* Remove arrows from number inputs */
-input[type="number"]::-webkit-inner-spin-button,
-input[type="number"]::-webkit-outer-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-}
-
-input[type="number"] {
-    -moz-appearance: textfield;
 }
 
 /* Card input container styles */
@@ -109,42 +179,6 @@ input[type="number"] {
     top: 50%;
     transform: translateY(-50%);
     font-size: 24px;
-}
-
-.card-type-visa .card-type-icon {
-    color: #1a1f71;
-}
-
-.card-type-mastercard .card-type-icon {
-    color: #eb001b;
-}
-
-.card-type-amex .card-type-icon {
-    color: #006fcf;
-}
-
-.card-type-discover .card-type-icon {
-    color: #ff6000;
-}
-
-/* Error Modal */
-.error-modal .modal-content {
-    border-top: 4px solid #dc3545;
-}
-
-.error-icon {
-    color: #dc3545;
-    font-size: 3rem;
-    margin-bottom: 1rem;
-}
-
-/* Payment button visibility */
-.payment-button {
-    display: none;
-}
-
-.payment-button.visible {
-    display: block;
 }
 
 /* Success animation */
@@ -161,79 +195,6 @@ input[type="number"] {
     border-radius: 50%;
     box-sizing: content-box;
     border: 4px solid #4CAF50;
-}
-
-.success-checkmark .check-icon::before {
-    top: 3px;
-    left: -2px;
-    width: 30px;
-    transform-origin: 100% 50%;
-    border-radius: 100px 0 0 100px;
-}
-
-.success-checkmark .check-icon::after {
-    top: 0;
-    left: 30px;
-    width: 60px;
-    transform-origin: 0 50%;
-    border-radius: 0 100px 100px 0;
-    animation: rotate-circle 4.25s ease-in;
-}
-
-.success-checkmark .check-icon::before,
-.success-checkmark .check-icon::after {
-    content: '';
-    height: 100px;
-    position: absolute;
-    background: #FFFFFF;
-    transform: rotate(-45deg);
-}
-
-.success-checkmark .check-icon .icon-line {
-    height: 5px;
-    background-color: #4CAF50;
-    display: block;
-    border-radius: 2px;
-    position: absolute;
-    z-index: 10;
-}
-
-.success-checkmark .check-icon .icon-line.line-tip {
-    top: 46px;
-    left: 14px;
-    width: 25px;
-    transform: rotate(45deg);
-    animation: icon-line-tip 0.75s;
-}
-
-.success-checkmark .check-icon .icon-line.line-long {
-    top: 38px;
-    right: 8px;
-    width: 47px;
-    transform: rotate(-45deg);
-    animation: icon-line-long 0.75s;
-}
-
-@keyframes rotate-circle {
-    0% { transform: rotate(-45deg); }
-    5% { transform: rotate(-45deg); }
-    12% { transform: rotate(-405deg); }
-    100% { transform: rotate(-405deg); }
-}
-
-@keyframes icon-line-tip {
-    0% { width: 0; left: 1px; top: 19px; }
-    54% { width: 0; left: 1px; top: 19px; }
-    70% { width: 50px; left: -8px; top: 37px; }
-    84% { width: 17px; left: 21px; top: 48px; }
-    100% { width: 25px; left: 14px; top: 46px; }
-}
-
-@keyframes icon-line-long {
-    0% { width: 0; right: 46px; top: 54px; }
-    65% { width: 0; right: 46px; top: 54px; }
-    84% { width: 55px; right: 0px; top: 35px; }
-    100% { width: 47px; right: 8px; top: 38px; }
 }
 
 /* Responsive styles */
