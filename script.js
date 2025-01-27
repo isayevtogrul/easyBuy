@@ -355,14 +355,27 @@ function processPayment() {
         return;
     }
 
+    // Expiry date validation
     if (!/^\d{2}\/\d{2}$/.test(expiryDate)) {
         showError('Invalid expiry date format (MM/YY)');
         return;
     }
 
     const [month, year] = expiryDate.split('/');
-    if (parseInt(month) < 1 || parseInt(month) > 12) {
-        showError('Invalid month in expiry date');
+    const currentDate = new Date();
+    const currentYear = currentDate.getFullYear() % 100; // Get last 2 digits of year
+    const currentMonth = currentDate.getMonth() + 1; // Get current month (1-12)
+    
+    const expMonth = parseInt(month);
+    const expYear = parseInt(year);
+
+    if (expMonth < 1 || expMonth > 12) {
+        showError('Invalid month in expiry date (must be 1-12)');
+        return;
+    }
+
+    if (expYear < currentYear || (expYear === currentYear && expMonth < currentMonth)) {
+        showError('Card has expired');
         return;
     }
 
