@@ -10,11 +10,17 @@
 body {
     background: var(--bg-color);
     font-family: 'Roboto', sans-serif;
+    padding-top: 70px; /* Navbar üçün yer buraxırıq */
 }
 
 .navbar {
     background: white !important;
     box-shadow: var(--shadow-sm);
+    position: fixed;
+    width: 100%;
+    top: 0;
+    left: 0;
+    z-index: 1000;
 }
 
 /* Form controls */
@@ -188,12 +194,24 @@ input[type="number"] {
 
 /* Responsive styles */
 @media (max-width: 768px) {
+    body {
+        padding-top: 60px; 
+    }
+
+    .navbar {
+        padding: 8px 0;
+    }
+    
+    .navbar-brand {
+        font-size: 1.1rem;
+    }
+
     .price-inputs input {
         width: 80px;
     }
 
     #searchInput {
-        width: 200px;
+        width: 150px;
     }
 
     .card-img-top {
