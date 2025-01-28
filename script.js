@@ -60,7 +60,9 @@ const displayProducts = products => {
                         <span class="h5 mb-0">$${p.price}</span>
                         <span class="product-rating">★ ${p.rating}</span>
                     </div>
-                    <button onclick="addToCart(${p.id})" class="btn btn-primary w-100 mt-3">Add to Cart</button>
+                    <button onclick="addToCart(${p.id})" class="btn btn-primary w-100 mt-3">
+                        <i class="fas fa-bag-shopping me-2"></i>Buy Now
+                    </button>
                 </div>
             </div>
         </div>
@@ -80,13 +82,11 @@ const setupFilters = () => {
 
     const setupInputHandler = (id, handler) => $$(id).addEventListener('input', handler);
 
-    // Category filter change handler
     categoryFilter.addEventListener('change', e => {
         activeFilters.category = e.target.value;
         filterProducts();
     });
 
-    // Price filter handlers
     setupInputHandler('minPrice', function() {
         activeFilters.minPrice = this.value ? Number(this.value) : '';
         filterProducts();
@@ -97,7 +97,6 @@ const setupFilters = () => {
         filterProducts();
     });
 
-    // Card input handlers
     setupInputHandler('cardNumber', function() {
         let value = this.value.replace(/\D/g, '');
         this.value = value.replace(/(\d{4})/g, '$1 ').trim();
@@ -330,5 +329,4 @@ const showPaymentForm = () => {
     showModal(paymentModal);
 };
 
-// Initialize the application when the page loads
 window.addEventListener('load', getProducts);
