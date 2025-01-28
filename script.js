@@ -48,8 +48,83 @@ async function getProducts() {
     }
 }
 
+async function getProductDetails() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const productId = urlParams.get('id');
+
+    if (!productId) {
+        window.location.href = 'shop.html';
+        return;
+    }
+
+    try {
+        const response = await fetch(`https://dummyjson.com/products/${productId}`);
+        const product = await response.json();
+        displayProductDetails(product);
+        updateCartCount();
+    } catch (error) {
+        console.error('Error:', error);
+        showError('Failed to load product details');
+    }
+}
+
+function displayProductDetails(product) {
+    const container = document.querySelector('#productDetails');
+    if (!container) return;
+    
+    const detailsHTML = `
+        <div class="card">
+            <div class="row g-0">
+                <div class="col-md-6">
+                    <img src="${product.thumbnail}" class="product-detail-image" alt="${product.title}" id="mainImage">
+                    <div class="product-images">
+                        ${product.images.map(img => `
+                            <img src="${img}" class="thumbnail-image" onclick="updateMainImage('${img}')" alt="${product.title}">
+                        `).join('')}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card-body">
+                        <h2 class="card-title">${product.title}</h2>
+                        <p class="lead">${product.description}</p>
+                        <div class="d-flex align-items-center gap-3 mb-3">
+                            <span class="price-tag">$${product.price}</span>
+                            <span class="discount-badge">${product.discountPercentage}% OFF</span>
+                        </div>
+                        <div class="rating">
+                            <i class="fas fa-star me-2"></i>
+                            <span>${product.rating}</span>
+                        </div>
+                        <div class="product-info">
+                            <p><strong>Category:</strong> ${product.category}</p>
+                            <p><strong>Brand:</strong> ${product.brand}</p>
+                            <p><strong>Stock:</strong> ${product.stock} units</p>
+                        </div>
+                        <button onclick="addToCart(${product.id})" class="btn btn-primary">
+                            <i class="fas fa-bag-shopping"></i>
+                            Buy Now
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    container.innerHTML = detailsHTML;
+}
+
+function updateMainImage(src) {
+    const mainImage = document.getElementById('mainImage');
+    if (mainImage) {
+        mainImage.src = src;
+    }
+}
+
 const displayProducts = products => {
-    $('#productsContainer').innerHTML = products.map(p => `
+    const container = $('#productsContainer');
+    if (!container) return;
+
+    container.innerHTML = products.map(p => `
         <div class="col-md-4 mb-4">
             <div class="card">
                 <img src="${p.thumbnail}" class="card-img-top" alt="${p.title}">
@@ -60,9 +135,14 @@ const displayProducts = products => {
                         <span class="h5 mb-0">$${p.price}</span>
                         <span class="product-rating">★ ${p.rating}</span>
                     </div>
-                    <button onclick="addToCart(${p.id})" class="btn btn-primary w-100 mt-3">
-                        <i class="fas fa-bag-shopping me-2"></i>Buy Now
-                    </button>
+                    <div class="d-flex gap-2 mt-3">
+                        <a href="details.html?id=${p.id}" class="btn btn-outline-primary flex-grow-1">
+                            <i class="fas fa-info-circle me-2"></i>Details
+                        </a>
+                        <button onclick="addToCart(${p.id})" class="btn btn-primary flex-grow-1">
+                            <i class="fas fa-bag-shopping me-2"></i>Buy Now
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -70,8 +150,10 @@ const displayProducts = products => {
 };
 
 const setupFilters = () => {
-    const categories = [...new Set(products.map(p => p.category))];
     const categoryFilter = $('#categoryFilter');
+    if (!categoryFilter) return;
+
+    const categories = [...new Set(products.map(p => p.category))];
     
     categoryFilter.innerHTML = `
         <option value="">All Categories</option>
@@ -80,7 +162,10 @@ const setupFilters = () => {
         ).join('')}
     `;
 
-    const setupInputHandler = (id, handler) => $$(id).addEventListener('input', handler);
+    const setupInputHandler = (id, handler) => {
+        const element = $$(id);
+        if (element) element.addEventListener('input', handler);
+    };
 
     categoryFilter.addEventListener('change', e => {
         activeFilters.category = e.target.value;
@@ -102,14 +187,16 @@ const setupFilters = () => {
         this.value = value.replace(/(\d{4})/g, '$1 ').trim();
         
         const cardTypeIcon = $$('cardTypeIcon');
-        cardTypeIcon.className = 'card-type-icon';
-        
-        const matchedCard = Object.values(cardPatterns).find(({pattern}) => pattern.test(value));
-        if (matchedCard) {
-            cardTypeIcon.className = `card-type-icon ${matchedCard.icon}`;
-            cardTypeIcon.style.display = 'block';
-        } else {
-            cardTypeIcon.style.display = 'none';
+        if (cardTypeIcon) {
+            cardTypeIcon.className = 'card-type-icon';
+            
+            const matchedCard = Object.values(cardPatterns).find(({pattern}) => pattern.test(value));
+            if (matchedCard) {
+                cardTypeIcon.className = `card-type-icon ${matchedCard.icon}`;
+                cardTypeIcon.style.display = 'block';
+            } else {
+                cardTypeIcon.style.display = 'none';
+            }
         }
     });
 
@@ -130,7 +217,7 @@ const filterProducts = () => {
     let filtered = products;
     const {category, minPrice, maxPrice} = activeFilters;
 
-    if (category && category !== '') {
+    if (category) {
         filtered = filtered.filter(p => p.category === category);
     }
     if (minPrice) {
@@ -145,7 +232,10 @@ const filterProducts = () => {
 };
 
 const updateActiveFilters = () => {
-    $$('activeFilters').innerHTML = [
+    const filterContainer = $$('activeFilters');
+    if (!filterContainer) return;
+
+    filterContainer.innerHTML = [
         activeFilters.category && `
             <span class="active-filter">
                 Category: ${activeFilters.category}
@@ -164,18 +254,24 @@ const updateActiveFilters = () => {
 const clearFilter = type => {
     if (type === 'category') {
         activeFilters.category = '';
-        $$('categoryFilter').value = '';
+        const categoryFilter = $$('categoryFilter');
+        if (categoryFilter) categoryFilter.value = '';
     } else if (type === 'price') {
         activeFilters.minPrice = '';
         activeFilters.maxPrice = '';
-        $$('minPrice').value = '';
-        $$('maxPrice').value = '';
+        const minPrice = $$('minPrice');
+        const maxPrice = $$('maxPrice');
+        if (minPrice) minPrice.value = '';
+        if (maxPrice) maxPrice.value = '';
     }
     filterProducts();
 };
 
 const searchProducts = () => {
-    const searchTerm = $$('searchInput').value.toLowerCase();
+    const searchInput = $$('searchInput');
+    if (!searchInput) return;
+
+    const searchTerm = searchInput.value.toLowerCase();
     const filtered = products.filter(p => 
         p.title.toLowerCase().includes(searchTerm) || 
         p.description.toLowerCase().includes(searchTerm)
@@ -183,20 +279,23 @@ const searchProducts = () => {
     displayProducts(filtered);
 };
 
-const addToCart = productId => {
+const addToCart = async (productId) => {
     const totalItems = cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
     if (totalItems >= 20) {
-        return showError('Cart limit reached! Maximum 20 items allowed.');
+        showError('Cart limit reached! Maximum 20 items allowed.');
+        return;
     }
 
-    const product = products.find(p => p.id === productId);
-    if (product) {
+    try {
+        const response = await fetch(`https://dummyjson.com/products/${productId}`);
+        const product = await response.json();
+
         const existingItem = cart.find(item => item.id === productId);
         if (existingItem) {
             existingItem.quantity = (existingItem.quantity || 1) + 1;
         } else {
             cart.push({
-                ...product, 
+                ...product,
                 quantity: 1,
                 addedAt: new Date().toLocaleString()
             });
@@ -205,11 +304,16 @@ const addToCart = productId => {
         updateLocalStorage();
         updateCartCount();
         showToast('Product added to cart!');
+    } catch (error) {
+        console.error('Error:', error);
+        showError('Failed to add product to cart');
     }
 };
 
 const showCart = () => {
     const container = $$('cartItems');
+    if (!container) return;
+
     const total = cart.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0);
     const paymentBtn = $$('proceedToPayment');
     
@@ -219,7 +323,7 @@ const showCart = () => {
                 <i class="fas fa-shopping-cart fa-3x mb-3 text-muted"></i>
                 <p>Your cart is empty</p>
             </div>`;
-        paymentBtn.style.display = 'none';
+        if (paymentBtn) paymentBtn.style.display = 'none';
     } else {
         container.innerHTML = `
             <div class="d-flex justify-content-end mb-3">
@@ -255,18 +359,20 @@ const showCart = () => {
                     </div>
                 </div>
             `).join('')}`;
-        paymentBtn.style.display = 'block';
+        if (paymentBtn) paymentBtn.style.display = 'block';
     }
     
-    $$('cartTotal').textContent = total.toFixed(2);
-    showModal(cartModal);
+    const cartTotal = $$('cartTotal');
+    if (cartTotal) cartTotal.textContent = total.toFixed(2);
+    if (cartModal) showModal(cartModal);
 };
 
 const updateCart = (index, action) => {
     if (action === 'increase') {
         const totalItems = cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
         if (totalItems >= 20) {
-            return showError('Cart limit reached! Maximum 20 items allowed.');
+            showError('Cart limit reached! Maximum 20 items allowed.');
+            return;
         }
         cart[index].quantity = (cart[index].quantity || 1) + 1;
     } else if (action === 'decrease') {
@@ -299,9 +405,9 @@ const removeAllFromCart = () => {
 };
 
 const processPayment = () => {
-    const cardNumber = $$('cardNumber').value.replace(/\D/g, '');
-    const expiryDate = $$('expiryDate').value;
-    const cvv = $$('cvv').value;
+    const cardNumber = $$('cardNumber')?.value.replace(/\D/g, '');
+    const expiryDate = $$('expiryDate')?.value;
+    const cvv = $$('cvv')?.value;
 
     if (!cardNumber || !expiryDate || !cvv) {
         return showError('Please fill in all payment details');
@@ -328,16 +434,23 @@ const processPayment = () => {
         return showError('Invalid CVV');
     }
 
-    hideModal(paymentModal);
+    if (paymentModal) hideModal(paymentModal);
     cart = [];
     updateLocalStorage();
     updateCartCount();
-    showModal(successModal);
+    if (successModal) showModal(successModal);
 };
 
 const showPaymentForm = () => {
-    hideModal(cartModal);
-    showModal(paymentModal);
+    if (cartModal) hideModal(cartModal);
+    if (paymentModal) showModal(paymentModal);
 };
 
-window.addEventListener('load', getProducts);
+window.addEventListener('load', () => {
+    const isDetailsPage = window.location.pathname.includes('details.html');
+    if (isDetailsPage) {
+        getProductDetails();
+    } else {
+        getProducts();
+    }
+});
