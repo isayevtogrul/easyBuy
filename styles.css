@@ -1,81 +1,70 @@
-/* Base styles */
+:root {
+    --primary-color: #ff4444;
+    --primary-hover: #cc0000;
+    --shadow-sm: 0 2px 10px rgba(0,0,0,0.1);
+    --shadow-md: 0 4px 15px rgba(0,0,0,0.1);
+    --border-color: #dee2e6;
+    --bg-color: #f8f9fa;
+}
+
 body {
-    background: #f8f9fa;
+    background: var(--bg-color);
     font-family: 'Roboto', sans-serif;
 }
 
-/* Navbar styles */
 .navbar {
     background: white !important;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    box-shadow: var(--shadow-sm);
 }
 
-/* Form elements focus and border colors */
-.form-control:focus,
-.form-select:focus {
-    border-color: #dee2e6 !important;
-    box-shadow: none !important;
-}
-
+/* Form controls */
 .form-control,
 .form-select {
-    border-color: #dee2e6 !important;
+    border-color: var(--border-color) !important;
+    
+    &:focus {
+        border-color: var(--border-color) !important;
+        box-shadow: none !important;
+    }
 }
 
-/* Select option hover and selected states */
-.form-select option:checked,
-.form-select option:hover {
-    background-color: #ff4444 !important;
-    color: white !important;
+.form-select {
+    option {
+        &:checked,
+        &:hover {
+            background-color: var(--primary-color) !important;
+            color: white !important;
+        }
+    }
 }
 
-/* Selected option in dropdown */
-.form-select option:checked {
-    background: #ff4444 !important;
-}
-
-/* Search button */
-.btn-outline-primary {
-    background-color: #ff4444 !important;
-    color: white !important;
-    border-color: #ff4444 !important;
-}
-
-.btn-outline-primary:hover {
-    background-color: #cc0000 !important;
-    border-color: #cc0000 !important;
-}
-
-/* Cart button and other primary buttons */
+/* Buttons */
+.btn-outline-primary,
 .btn-primary {
-    background-color: #ff4444 !important;
+    background-color: var(--primary-color) !important;
     color: white !important;
-    border-color: #ff4444 !important;
-}
+    border-color: var(--primary-color) !important;
 
-.btn-primary:hover {
-    background-color: #cc0000 !important;
-    border-color: #cc0000 !important;
+    &:hover {
+        background-color: var(--primary-hover) !important;
+        border-color: var(--primary-hover) !important;
+    }
 }
-
 
 .badge.bg-danger {
-    background-color: #ff4444 !important;
+    background-color: var(--primary-color) !important;
     color: black !important;
 }
-
 
 .fa-shopping-cart {
     color: black !important;
 }
 
-
-
 .filters-container {
     background: white;
     padding: 20px;
     border-radius: 10px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    box-shadow: var(--shadow-sm);
 }
 
 /* Price inputs */
@@ -84,14 +73,14 @@ body {
 }
 
 /* Remove arrows from number inputs */
-input[type="number"]::-webkit-inner-spin-button,
-input[type="number"]::-webkit-outer-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-}
-
 input[type="number"] {
     -moz-appearance: textfield;
+    
+    &::-webkit-inner-spin-button,
+    &::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
 }
 
 /* Card styles */
@@ -99,12 +88,12 @@ input[type="number"] {
     transition: transform 0.3s;
     height: 100%;
     border: none;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-}
+    box-shadow: var(--shadow-sm);
 
-.card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    &:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-md);
+    }
 }
 
 .card-img-top {
@@ -130,16 +119,16 @@ input[type="number"] {
     border-radius: 20px;
     margin-right: 10px;
     font-size: 0.9rem;
-}
 
-.active-filter .close {
-    margin-left: 5px;
-    cursor: pointer;
-    opacity: 0.5;
-}
+    .close {
+        margin-left: 5px;
+        cursor: pointer;
+        opacity: 0.5;
 
-.active-filter .close:hover {
-    opacity: 1;
+        &:hover {
+            opacity: 1;
+        }
+    }
 }
 
 /* Toast notification */
@@ -165,7 +154,7 @@ input[type="number"] {
 /* Modal styles */
 .modal-content {
     border: none;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    box-shadow: var(--shadow-sm);
 }
 
 /* Card input container styles */
@@ -186,15 +175,15 @@ input[type="number"] {
     width: 80px;
     height: 80px;
     margin: 0 auto;
-}
 
-.success-checkmark .check-icon {
-    width: 80px;
-    height: 80px;
-    position: relative;
-    border-radius: 50%;
-    box-sizing: content-box;
-    border: 4px solid #4CAF50;
+    .check-icon {
+        width: 80px;
+        height: 80px;
+        position: relative;
+        border-radius: 50%;
+        box-sizing: content-box;
+        border: 4px solid #4CAF50;
+    }
 }
 
 /* Responsive styles */

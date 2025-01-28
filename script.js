@@ -1,268 +1,190 @@
-let products = [];
-let cart = JSON.parse(localStorage.getItem('cart')) || [];
-let cartModal;
-let paymentModal;
-let successModal;
-let errorModal;
-let activeFilters = {
-    category: '',
-    minPrice: '',
-    maxPrice: ''
-};
+let products = [], cart = JSON.parse(localStorage.getItem('cart')) || [];
+let cartModal, paymentModal, successModal, errorModal;
+let activeFilters = { category: '', minPrice: '', maxPrice: '' };
 
-// Kart növləri üçün regex patterns
+const $ = document.querySelector.bind(document);
+const $$ = document.getElementById.bind(document);
+
 const cardPatterns = {
-    visa: {
-        pattern: /^4/,
-        icon: 'fa-brands fa-cc-visa'
-    },
-    mastercard: {
-        pattern: /^5[1-5]/,
-        icon: 'fa-brands fa-cc-mastercard'
-    },
-    amex: {
-        pattern: /^3[47]/,
-        icon: 'fa-brands fa-cc-amex'
-    },
-    discover: {
-        pattern: /^6/,
-        icon: 'fa-brands fa-cc-discover'
-    }
+    visa: { pattern: /^4/, icon: 'fa-brands fa-cc-visa' },
+    mastercard: { pattern: /^5[1-5]/, icon: 'fa-brands fa-cc-mastercard' },
+    amex: { pattern: /^3[47]/, icon: 'fa-brands fa-cc-amex' },
+    discover: { pattern: /^6/, icon: 'fa-brands fa-cc-discover' }
 };
 
-// Initialize
+const updateLocalStorage = () => localStorage.setItem('cart', JSON.stringify(cart));
+
+const showModal = (modal) => modal.show();
+const hideModal = (modal) => modal.hide();
+
+const updateCartCount = () => $$('cartCount').textContent = cart.reduce((total, item) => total + (item.quantity || 1), 0);
+
+const showToast = message => {
+    const toast = Object.assign(document.createElement('div'), {
+        className: 'toast',
+        textContent: message
+    });
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+};
+
+const showError = message => {
+    $$('errorMessage').textContent = message;
+    showModal(errorModal);
+};
+
 async function getProducts() {
     try {
-        const response = await fetch('https://dummyjson.com/products');
-        const data = await response.json();
-        products = data.products;
+        products = (await (await fetch('https://dummyjson.com/products')).json()).products;
         displayProducts(products);
         setupFilters();
         updateCartCount();
-        cartModal = new bootstrap.Modal(document.getElementById('cartModal'));
-        paymentModal = new bootstrap.Modal(document.getElementById('paymentModal'));
-        successModal = new bootstrap.Modal(document.getElementById('successModal'));
-        errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
-    } catch (error) {
-        console.error('Error:', error);
-    }
+        [cartModal, paymentModal, successModal, errorModal] = ['cart', 'payment', 'success', 'error']
+            .map(id => new bootstrap.Modal($$(id + 'Modal')));
+    } catch (error) { console.error('Error:', error); }
 }
 
-// Display products
-function displayProducts(products) {
-    const container = document.querySelector('#productsContainer');
-    container.innerHTML = '';
-    
-    products.forEach(product => {
-        const productCard = `
-            <div class="col-md-4 mb-4">
-                <div class="card">
-                    <img src="${product.thumbnail}" class="card-img-top" alt="${product.title}">
-                    <div class="card-body">
-                        <h5 class="card-title">${product.title}</h5>
-                        <p class="card-text">${product.description.substring(0, 100)}...</p>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <span class="h5 mb-0">$${product.price}</span>
-                            <span class="product-rating">★ ${product.rating}</span>
-                        </div>
-                        <button onclick="addToCart(${product.id})" class="btn btn-primary w-100 mt-3">
-                            Add to Cart
-                        </button>
+const displayProducts = products => {
+    $('#productsContainer').innerHTML = products.map(p => `
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <img src="${p.thumbnail}" class="card-img-top" alt="${p.title}">
+                <div class="card-body">
+                    <h5 class="card-title">${p.title}</h5>
+                    <p class="card-text">${p.description.substring(0, 100)}...</p>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="h5 mb-0">$${p.price}</span>
+                        <span class="product-rating">★ ${p.rating}</span>
                     </div>
+                    <button onclick="addToCart(${p.id})" class="btn btn-primary w-100 mt-3">Add to Cart</button>
                 </div>
             </div>
-        `;
-        container.innerHTML += productCard;
-    });
-}
+        </div>
+    `).join('');
+};
 
-// Setup filters
-function setupFilters() {
+const setupFilters = () => {
     const categories = [...new Set(products.map(p => p.category))];
-    const categoryFilter = document.querySelector('#categoryFilter');
+    const categoryFilter = $('#categoryFilter');
     
-    categories.forEach(category => {
-        const option = document.createElement('option');
-        option.value = category;
-        option.textContent = category.charAt(0).toUpperCase() + category.slice(1);
-        categoryFilter.appendChild(option);
-    });
+    categoryFilter.innerHTML = categories.map(cat => 
+        `<option value="${cat}">${cat.charAt(0).toUpperCase() + cat.slice(1)}</option>`
+    ).join('');
 
-    // Event listeners
-    categoryFilter.addEventListener('change', function(e) {
+    const setupInputHandler = (id, handler) => $$(id).addEventListener('input', handler);
+
+    categoryFilter.addEventListener('change', e => {
         activeFilters.category = e.target.value;
         filterProducts();
-        updateActiveFilters();
     });
 
-    // Kart nömrəsinin formatlanması və növünün təyini
-    document.getElementById('cardNumber').addEventListener('input', function(e) {
+    setupInputHandler('cardNumber', function() {
         let value = this.value.replace(/\D/g, '');
-        let formattedValue = '';
+        this.value = value.replace(/(\d{4})/g, '$1 ').trim();
         
-        // Formatlanma
-        for(let i = 0; i < value.length; i++) {
-            if(i > 0 && i % 4 === 0) {
-                formattedValue += ' ';
-            }
-            formattedValue += value[i];
-        }
-        
-        this.value = formattedValue;
-
-        // Kart növünün təyini
-        const cardTypeIcon = document.getElementById('cardTypeIcon');
-        const cleanValue = value.replace(/\D/g, '');
-
+        const cardTypeIcon = $$('cardTypeIcon');
         cardTypeIcon.className = 'card-type-icon';
         
-        for(let [type, details] of Object.entries(cardPatterns)) {
-            if(details.pattern.test(cleanValue)) {
-                cardTypeIcon.className = `card-type-icon ${details.icon}`;
-                cardTypeIcon.style.display = 'block';
-                return;
-            }
+        const matchedCard = Object.values(cardPatterns).find(({pattern}) => pattern.test(value));
+        if (matchedCard) {
+            cardTypeIcon.className = `card-type-icon ${matchedCard.icon}`;
+            cardTypeIcon.style.display = 'block';
+        } else {
+            cardTypeIcon.style.display = 'none';
         }
-        
-        cardTypeIcon.style.display = 'none';
     });
 
-    // Format expiry date
-    document.getElementById('expiryDate').addEventListener('input', function(e) {
+    setupInputHandler('expiryDate', function() {
         let value = this.value.replace(/\D/g, '');
-        if (value.length >= 2) {
-            value = value.slice(0, 2) + '/' + value.slice(2);
-        }
+        if (value.length >= 2) value = value.slice(0, 2) + '/' + value.slice(2);
         this.value = value.slice(0, 5);
     });
 
-    // Format CVV
-    document.getElementById('cvv').addEventListener('input', function(e) {
+    setupInputHandler('cvv', function() {
         this.value = this.value.replace(/\D/g, '').slice(0, 3);
     });
-}
+};
 
-// Filter products
-function filterProducts() {
-    let filteredProducts = products;
+const filterProducts = () => {
+    let filtered = products;
+    const {category, minPrice, maxPrice} = activeFilters;
 
-    if (activeFilters.category) {
-        filteredProducts = filteredProducts.filter(p => p.category === activeFilters.category);
-    }
+    if (category) filtered = filtered.filter(p => p.category === category);
+    if (minPrice) filtered = filtered.filter(p => p.price >= minPrice);
+    if (maxPrice) filtered = filtered.filter(p => p.price <= maxPrice);
 
-    if (activeFilters.minPrice) {
-        filteredProducts = filteredProducts.filter(p => p.price >= activeFilters.minPrice);
-    }
-
-    if (activeFilters.maxPrice) {
-        filteredProducts = filteredProducts.filter(p => p.price <= activeFilters.maxPrice);
-    }
-
-    displayProducts(filteredProducts);
+    displayProducts(filtered);
     updateActiveFilters();
-}
+};
 
-// Update active filters display
-function updateActiveFilters() {
-    const container = document.getElementById('activeFilters');
-    container.innerHTML = '';
-
-    if (activeFilters.category) {
-        container.innerHTML += `
+const updateActiveFilters = () => {
+    $$('activeFilters').innerHTML = [
+        activeFilters.category && `
             <span class="active-filter">
                 Category: ${activeFilters.category}
                 <span class="close" onclick="clearFilter('category')">&times;</span>
             </span>
-        `;
-    }
-
-    if (activeFilters.minPrice || activeFilters.maxPrice) {
-        container.innerHTML += `
+        `,
+        (activeFilters.minPrice || activeFilters.maxPrice) && `
             <span class="active-filter">
                 Price: $${activeFilters.minPrice || '0'} - $${activeFilters.maxPrice || '∞'}
                 <span class="close" onclick="clearFilter('price')">&times;</span>
             </span>
-        `;
-    }
-}
+        `
+    ].filter(Boolean).join('');
+};
 
-// Clear filter
-function clearFilter(type) {
+const clearFilter = type => {
     if (type === 'category') {
         activeFilters.category = '';
-        document.getElementById('categoryFilter').value = '';
-    } else if (type === 'price') {
-        activeFilters.minPrice = '';
-        activeFilters.maxPrice = '';
-        document.getElementById('minPrice').value = '';
-        document.getElementById('maxPrice').value = '';
+        $$('categoryFilter').value = '';
+    } else {
+        activeFilters.minPrice = activeFilters.maxPrice = '';
+        $$('minPrice').value = $$('maxPrice').value = '';
     }
     filterProducts();
-}
+};
 
-// Apply price filter
-function applyPriceFilter() {
-    activeFilters.minPrice = document.getElementById('minPrice').value;
-    activeFilters.maxPrice = document.getElementById('maxPrice').value;
-    filterProducts();
-}
+const searchProducts = () => {
+    const term = $$('searchInput').value.toLowerCase();
+    displayProducts(products.filter(p => 
+        p.title.toLowerCase().includes(term) || 
+        p.description.toLowerCase().includes(term)
+    ));
+};
 
-// Search products
-function searchProducts() {
-    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-    const filteredProducts = products.filter(p => 
-        p.title.toLowerCase().includes(searchTerm) || 
-        p.description.toLowerCase().includes(searchTerm)
-    );
-    displayProducts(filteredProducts);
-}
-
-// Cart functions
-function addToCart(productId) {
-    if (getTotalCartItems() >= 20) {
-        showError('Cart limit reached! Maximum 20 items allowed.');
-        return;
+const addToCart = productId => {
+    if (cart.reduce((sum, item) => sum + (item.quantity || 1), 0) >= 20) {
+        return showError('Cart limit reached! Maximum 20 items allowed.');
     }
 
     const product = products.find(p => p.id === productId);
     if (product) {
         const existingItem = cart.find(item => item.id === productId);
+        existingItem 
+            ? existingItem.quantity = (existingItem.quantity || 1) + 1
+            : cart.push({...product, quantity: 1});
         
-        if (existingItem) {
-            existingItem.quantity = (existingItem.quantity || 1) + 1;
-        } else {
-            cart.push({...product, quantity: 1});
-        }
-        
-        localStorage.setItem('cart', JSON.stringify(cart));
+        updateLocalStorage();
         updateCartCount();
         showToast('Product added to cart!');
     }
-}
+};
 
-function getTotalCartItems() {
-    return cart.reduce((total, item) => total + (item.quantity || 1), 0);
-}
-
-function updateCartCount() {
-    const totalItems = getTotalCartItems();
-    document.getElementById('cartCount').textContent = totalItems;
-}
-
-function showCart() {
-    const container = document.getElementById('cartItems');
+const showCart = () => {
+    const container = $$('cartItems');
     const total = cart.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0);
-    const paymentButton = document.getElementById('proceedToPayment');
+    const paymentBtn = $$('proceedToPayment');
     
-    if (cart.length === 0) {
+    if (!cart.length) {
         container.innerHTML = '<p class="text-center">Your cart is empty</p>';
-        paymentButton.style.display = 'none';
+        paymentBtn.style.display = 'none';
     } else {
         container.innerHTML = `
             <div class="d-flex justify-content-end mb-3">
-                <button onclick="removeAllFromCart()" class="btn btn-danger">Remove All Items</button>
+                <button onclick="removeAllFromCart()" class="btn btn-danger">Remove All</button>
             </div>
-            ${cart.map((item, index) => `
+            ${cart.map((item, i) => `
                 <div class="card mb-3">
                     <div class="row g-0">
                         <div class="col-md-4">
@@ -277,10 +199,10 @@ function showCart() {
                                     </h5>
                                     <div class="d-flex align-items-center">
                                         <div class="btn-group me-2">
-                                            <button onclick="decreaseQuantity(${index})" class="btn btn-sm btn-outline-secondary">-</button>
-                                            <button onclick="increaseQuantity(${index})" class="btn btn-sm btn-outline-secondary">+</button>
+                                            <button onclick="decreaseQuantity(${i})" class="btn btn-sm btn-outline-secondary">-</button>
+                                            <button onclick="increaseQuantity(${i})" class="btn btn-sm btn-outline-secondary">+</button>
                                         </div>
-                                        <button onclick="removeFromCart(${index})" class="btn btn-sm btn-danger">Remove</button>
+                                        <button onclick="removeFromCart(${i})" class="btn btn-sm btn-danger">Remove</button>
                                     </div>
                                 </div>
                                 <p class="card-text">$${(item.price * (item.quantity || 1)).toFixed(2)}</p>
@@ -289,124 +211,73 @@ function showCart() {
                     </div>
                 </div>
             `).join('')}`;
-        paymentButton.style.display = 'block';
+        paymentBtn.style.display = 'block';
     }
     
-    document.getElementById('cartTotal').textContent = total.toFixed(2);
-    cartModal.show();
-}
+    $$('cartTotal').textContent = total.toFixed(2);
+    showModal(cartModal);
+};
 
-function increaseQuantity(index) {
-    if (getTotalCartItems() >= 20) {
-        showError('Cart limit reached! Maximum 20 items allowed.');
-        return;
+const updateCart = (index, action) => {
+    if (action === 'increase') {
+        if (cart.reduce((sum, item) => sum + (item.quantity || 1), 0) >= 20) {
+            return showError('Cart limit reached! Maximum 20 items allowed.');
+        }
+        cart[index].quantity = (cart[index].quantity || 1) + 1;
+    } else if (action === 'decrease') {
+        if (cart[index].quantity > 1) cart[index].quantity -= 1;
+        else return removeFromCart(index);
     }
-    
-    cart[index].quantity = (cart[index].quantity || 1) + 1;
-    localStorage.setItem('cart', JSON.stringify(cart));
+    updateLocalStorage();
     updateCartCount();
     showCart();
-}
+};
 
-function decreaseQuantity(index) {
-    if (cart[index].quantity > 1) {
-        cart[index].quantity -= 1;
-        localStorage.setItem('cart', JSON.stringify(cart));
-        updateCartCount();
-        showCart();
-    } else {
-        removeFromCart(index);
-    }
-}
+const increaseQuantity = index => updateCart(index, 'increase');
+const decreaseQuantity = index => updateCart(index, 'decrease');
 
-function removeFromCart(index) {
+const removeFromCart = index => {
     cart.splice(index, 1);
-    localStorage.setItem('cart', JSON.stringify(cart));
+    updateLocalStorage();
     updateCartCount();
     showCart();
-}
+};
 
-function removeAllFromCart() {
+const removeAllFromCart = () => {
     cart = [];
-    localStorage.setItem('cart', JSON.stringify(cart));
+    updateLocalStorage();
     updateCartCount();
     showCart();
-}
+};
 
-function showPaymentForm() {
-    cartModal.hide();
-    paymentModal.show();
-}
+const processPayment = () => {
+    const cardNumber = $$('cardNumber').value.replace(/\D/g, '');
+    const expiryDate = $$('expiryDate').value;
+    const cvv = $$('cvv').value;
 
-// Process payment
-function processPayment() {
-    const cardNumber = document.getElementById('cardNumber').value.replace(/\D/g, '');
-    const expiryDate = document.getElementById('expiryDate').value;
-    const cvv = document.getElementById('cvv').value;
+    if (!cardNumber || !expiryDate || !cvv) return showError('Please fill in all payment details');
+    if (cardNumber.length < 16) return showError('Invalid card number');
+    if (!/^\d{2}\/\d{2}$/.test(expiryDate)) return showError('Invalid expiry date format (MM/YY)');
 
-    // Validations
-    if (!cardNumber || !expiryDate || !cvv) {
-        showError('Please fill in all payment details');
-        return;
-    }
+    const [month, year] = expiryDate.split('/').map(Number);
+    const now = new Date();
+    const currentYear = now.getFullYear() % 100;
+    const currentMonth = now.getMonth() + 1;
 
-    if (cardNumber.length < 16) {
-        showError('Invalid card number');
-        return;
-    }
+    if (month < 1 || month > 12) return showError('Invalid month in expiry date (must be 1-12)');
+    if (year < currentYear || (year === currentYear && month < currentMonth)) return showError('Card has expired');
+    if (cvv.length < 3) return showError('Invalid CVV');
 
-    // Expiry date validation
-    if (!/^\d{2}\/\d{2}$/.test(expiryDate)) {
-        showError('Invalid expiry date format (MM/YY)');
-        return;
-    }
-
-    const [month, year] = expiryDate.split('/');
-    const currentDate = new Date();
-    const currentYear = currentDate.getFullYear() % 100; // Get last 2 digits of year
-    const currentMonth = currentDate.getMonth() + 1; // Get current month (1-12)
-    
-    const expMonth = parseInt(month);
-    const expYear = parseInt(year);
-
-    if (expMonth < 1 || expMonth > 12) {
-        showError('Invalid month in expiry date (must be 1-12)');
-        return;
-    }
-
-    if (expYear < currentYear || (expYear === currentYear && expMonth < currentMonth)) {
-        showError('Card has expired');
-        return;
-    }
-
-    if (cvv.length < 3) {
-        showError('Invalid CVV');
-        return;
-    }
-
-    // If all validations pass
-    paymentModal.hide();
+    hideModal(paymentModal);
     cart = [];
-    localStorage.setItem('cart', JSON.stringify(cart));
+    updateLocalStorage();
     updateCartCount();
-    successModal.show();
-}
+    showModal(successModal);
+};
 
-function showError(message) {
-    document.getElementById('errorMessage').textContent = message;
-    errorModal.show();
-}
+const showPaymentForm = () => {
+    hideModal(cartModal);
+    showModal(paymentModal);
+};
 
-function showToast(message) {
-    const toast = document.createElement('div');
-    toast.className = 'toast';
-    toast.textContent = message;
-    document.body.appendChild(toast);
-    
-    setTimeout(() => {
-        toast.remove();
-    }, 3000);
-}
-
-// Initialize
 window.addEventListener('load', getProducts);
