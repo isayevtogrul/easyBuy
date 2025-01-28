@@ -195,7 +195,11 @@ const addToCart = productId => {
         if (existingItem) {
             existingItem.quantity = (existingItem.quantity || 1) + 1;
         } else {
-            cart.push({...product, quantity: 1});
+            cart.push({
+                ...product, 
+                quantity: 1,
+                addedAt: new Date().toLocaleString()
+            });
         }
         
         updateLocalStorage();
@@ -210,7 +214,11 @@ const showCart = () => {
     const paymentBtn = $$('proceedToPayment');
     
     if (cart.length === 0) {
-        container.innerHTML = '<p class="text-center">Your cart is empty</p>';
+        container.innerHTML = `
+            <div class="text-center">
+                <i class="fas fa-shopping-cart fa-3x mb-3 text-muted"></i>
+                <p>Your cart is empty</p>
+            </div>`;
         paymentBtn.style.display = 'none';
     } else {
         container.innerHTML = `
@@ -235,10 +243,13 @@ const showCart = () => {
                                             <button onclick="decreaseQuantity(${i})" class="btn btn-sm btn-outline-secondary">-</button>
                                             <button onclick="increaseQuantity(${i})" class="btn btn-sm btn-outline-secondary">+</button>
                                         </div>
-                                        <button onclick="removeFromCart(${i})" class="btn btn-sm btn-danger">Remove</button>
+                                        <button onclick="removeFromCart(${i})" class="btn btn-sm btn-danger">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
                                     </div>
                                 </div>
                                 <p class="card-text">$${(item.price * (item.quantity || 1)).toFixed(2)}</p>
+                                <small class="text-muted">Added: ${item.addedAt || 'N/A'}</small>
                             </div>
                         </div>
                     </div>
